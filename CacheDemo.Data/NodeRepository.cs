@@ -14,12 +14,23 @@ namespace CacheDemo.Data
         {
             _cacheRepository = new CacheRepository<Node>();
         }
-        public Node GetByIdChildrenAndShortcut(int id)
+        public Node GetByIdWithChildren(int id)
         {
-            Node node = base.GetAll().Where(x => x.Id == id).Include("Content").First();
-            var childNode = base.GetAll().Where(x => x.ParentId == id).Include("Content").ToList();
-        
-            node.Children = childNode;
+            string key = string.Format("{0}.{1}.", this.GetType().FullName, id);
+            Node node;
+            if (_cacheRepository.Exists(key))
+            {
+                _cacheRepository.Get(key, out node);
+                return node;
+            }
+            else
+            {
+                node = base.GetAll().Where(x => x.Id == id).Include("Content").Include("Children").Include("Children.Content").First();
+                //var childNode = base.GetAll().Where(x => x.ParentId == id).Include("Content").ToList();
+                //node.Children = childNode;
+                _cacheRepository.Add(key, node);
+            }
+
             return node;
         }
         //public override Node GetById(int id)

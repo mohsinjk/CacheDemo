@@ -22,7 +22,7 @@ namespace CacheDemo.Tests.Controllers
             var nodeId = 1;
             var portalId = 1;
 
-            var getNode = unitOfWork.Nodes.GetById(nodeId);
+            var getNode = unitOfWork.Nodes.GetByIdWithChildren(nodeId);
             var childNodes = getNode.Children;
             var childNodeCountBefore = 0;
             if (childNodes != null)
@@ -36,15 +36,7 @@ namespace CacheDemo.Tests.Controllers
 
             //Act
             unitOfWork.Commit();
-            var childNodeCountAfter = unitOfWork.Nodes.GetById(nodeId).Children.Count();
-
-            //var testData = unitOfWork.Nodes.GetAll().Where(x => x.Id > 6);
-            //foreach (var n in testData)
-            //{
-            //    unitOfWork.Nodes.Delete(n);
-            //}
-
-            //unitOfWork.Commit();
+            var childNodeCountAfter = unitOfWork.Nodes.GetByIdWithChildren(nodeId).Children.Count();
 
             //Assert
             Assert.AreEqual(childNodeCountBefore + 2, childNodeCountAfter);
@@ -89,11 +81,11 @@ namespace CacheDemo.Tests.Controllers
             Assert.AreEqual(1, getNodeMoved.Children.Count());
         }
 
-        //[TestCleanup]
+        [TestCleanup]
         public void DeleteTestData()
         {
             IUnitOfWork unitOfWork = new UnitOfWork(new RepositoryProvider(new RepositoryFactories()));
-            var testData = unitOfWork.Nodes.GetAll().Where(x => x.Id > 6);
+            var testData = unitOfWork.Nodes.GetAll().Where(x => x.Id > 10);
             foreach (var node in testData)
             {
                 unitOfWork.Nodes.Delete(node);
@@ -108,8 +100,8 @@ namespace CacheDemo.Tests.Controllers
             IUnitOfWork unitOfWork = new UnitOfWork(new RepositoryProvider(new RepositoryFactories()));
             var nodeId = 1;
 
-            var getNode = unitOfWork.Nodes.GetById(nodeId);
-            var nodeWithChildren = unitOfWork.Nodes.GetByIdChildrenAndShortcut(nodeId);
+            //var getNode = unitOfWork.Nodes.GetById(nodeId);
+            var nodeWithChildren = unitOfWork.Nodes.GetByIdWithChildren(nodeId);
 
             foreach (var node in nodeWithChildren.Children)
             {
