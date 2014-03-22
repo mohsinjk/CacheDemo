@@ -5,8 +5,8 @@ namespace CacheDemo.Data.Contracts
 {
     public interface INodeRepository:IRepository<Node>
     {
-        Node GetByIdWithChildren(int id);
-        //IEnumerable<Node> GetByParentId(int id);
-        //void AddAndUpdateCacheForItsParent(Node node);
+        NodeDTO GetNodeDtoByIdWithChildren(int id);
+        IEnumerable<Node> GetByParentId(int id);
+        void UpdateCacheForItsParent(Node node);
     }
 }

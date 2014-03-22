@@ -39,7 +39,7 @@ namespace CacheDemo.Data
         {
             AddPortal(context);
             AddContent(context);
-            AddShortcut(context);
+            //AddShortcut(context);
             //AddContentWithChildNode(context);
         }
 
@@ -61,23 +61,43 @@ namespace CacheDemo.Data
 
         private void AddContent(ZeroDbContext context)
         {
-            var node = new Node { Content = new Content { Type = ContentType.Original, PortalId = 1 } };
-            context.Nodes.Add(node);
+            var node1 = new Node { Description="1", Content = new Content { Type = ContentType.Original, PortalId = 1 } };
+            context.Nodes.Add(node1);
 
-            node = new Node { Content = new Content { Type = ContentType.Original, PortalId = 1 } };
-            context.Nodes.Add(node);
+            var node11 = new Node { Description = "1.1", Parent = node1, Content = new Content { Type = ContentType.Original, PortalId = 1 } };
+            context.Nodes.Add(node11);
 
-            node = new Node { Content = new Content { Type = ContentType.Original, PortalId = 1 } };
-            context.Nodes.Add(node);
+            var node12 = new Node { Description = "1.2", Parent = node1, Content = new Content { Type = ContentType.Original, PortalId = 1 } };
+            context.Nodes.Add(node12);
 
-            node = new Node { Content = new Content { Type = ContentType.Original, PortalId = 2 } };
-            context.Nodes.Add(node);
+            var node111 = new Node { Description = "1.1.1", Parent = node11, Content = new Content { Type = ContentType.Original, PortalId = 1 } };
+            context.Nodes.Add(node111);
 
-            node = new Node { ParentId = 1, Content = new Content { Type = ContentType.Original, PortalId = 2 } };
-            context.Nodes.Add(node);
+            var node112 = new Node { Description = "1.1.2", Parent = node11, Content = new Content { Type = ContentType.Original, PortalId = 1 } };
+            context.Nodes.Add(node112);
 
-            node = new Node { Content = new Content { Type = ContentType.Original, PortalId = 3 } };
-            context.Nodes.Add(node);
+            var node121 = new Node { Description = "1.2.1", Parent = node12, Content = new Content { Type = ContentType.Original, PortalId = 1 } };
+            context.Nodes.Add(node121);
+
+            var node122 = new Node { Description = "1.2.2", Parent = node12, Content = new Content { Type = ContentType.Original, PortalId = 1 } };
+            context.Nodes.Add(node122);
+
+            var node2 = new Node { Description = "2", Content = new Content { Type = ContentType.Original, PortalId = 2 } };
+            context.Nodes.Add(node2);
+
+            var node21 = new Node { Description = "2.1", Parent = node2, Content = new Content { Type = ContentType.Original, PortalId = 2 } };
+            context.Nodes.Add(node21);
+            
+            //var node22 = new Node { Description = "2.2", Parent = node2, Content = new Content { Type = ContentType.Original, PortalId = 2 } };
+            //context.Nodes.Add(node22);
+
+            var node211 = new Node { Description = "2.1.1", Parent = node11, Content = new Content { Type = ContentType.Original, PortalId = 1 } };
+            context.Nodes.Add(node211);
+
+            var node212 = new Node { Description = "2.1.2", Parent = node11, Content = new Content { Type = ContentType.Original, PortalId = 1 } };
+            context.Nodes.Add(node212);
+
+           
 
             context.SaveChanges();
         }
