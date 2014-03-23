@@ -6,6 +6,7 @@
         public int PortalId { get; set; }
         public Portal Portal { get; set; }
         public ContentType Type { get; set; }
+        //public Node Node { get; set; }
     }
 
     public enum ContentType

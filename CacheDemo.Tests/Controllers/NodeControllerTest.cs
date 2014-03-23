@@ -8,6 +8,8 @@ using CacheDemo.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Content = CacheDemo.Model.Content;
 using System.Collections.Generic;
+using System.Data.Entity;
+using AutoMapper;
 
 namespace CacheDemo.Tests.Controllers
 {
@@ -47,24 +49,23 @@ namespace CacheDemo.Tests.Controllers
             var getNodeAfterMovingChildFromAnOtherParent = unitOfWork.Nodes.GetNodeDtoByIdWithChildren(4);
             //Assert
             Assert.AreEqual(childNodeCountBefore + 1, getNodeAfterNewlyAddedChild.Children.Count());
-            Assert.AreEqual(0, getNodeAfterMovingChildFromAnOtherParent.Children.Count());
+            Assert.AreEqual(2, getNodeAfterMovingChildFromAnOtherParent.Children.Count());
         }
 
         [TestMethod]
-        public void VerifyNodeWithShortcutContents()
+        public void GetNode_VerifyNodeWithShortcutContents_ShouldReturnOriginalContents()
         {
             IUnitOfWork unitOfWork = new UnitOfWork(new RepositoryProvider(new RepositoryFactories()));
             var nodeId = 1;
 
-            //var getNode = unitOfWork.Nodes.GetById(nodeId);
             var nodeWithChildren = unitOfWork.Nodes.GetNodeDtoByIdWithChildren(nodeId);
 
             foreach (var node in nodeWithChildren.Children)
             {
                 if (node.Content.Type == ContentType.Shortcut)
                 {
-                    var originalContent = unitOfWork.Shortcuts.GetOriginalContentByLinkContentId(node.Content.Id);
-                    node.Content = originalContent;
+                    var shortcut = unitOfWork.Shortcuts.GetOriginalContentByLinkContentId(node.Content.Id);
+                    node.Content = shortcut.OriginalContent;
                 }
             }
 
@@ -90,7 +91,7 @@ namespace CacheDemo.Tests.Controllers
             //Assert
             Assert.AreEqual(childNodeCountBefore + 2, childNodeCountAfter);
 
-            var testData = unitOfWork.Nodes.GetAll().Where(x => x.Id > 11);
+            var testData = unitOfWork.Nodes.GetAll().Where(x => x.Id > 12);
             foreach (var node in testData)
             {
                 unitOfWork.Nodes.Delete(node);
@@ -102,13 +103,12 @@ namespace CacheDemo.Tests.Controllers
             //Assert
             Assert.AreEqual(childNodeCountBefore, childNodeCountAfter);
         }
-        
-        
+
         [TestCleanup]
         public void DeleteTestData()
         {
             IUnitOfWork unitOfWork = new UnitOfWork(new RepositoryProvider(new RepositoryFactories()));
-            var testData = unitOfWork.Nodes.GetAll().Where(x => x.Id > 11);
+            var testData = unitOfWork.Nodes.GetAll().Where(x => x.Id > 12);
             foreach (var node in testData)
             {
                 unitOfWork.Nodes.Delete(node);
@@ -116,7 +116,6 @@ namespace CacheDemo.Tests.Controllers
 
             unitOfWork.Commit();
         }
-
 
         private static void MoveNode(IUnitOfWork unitOfWork, NodeDTO nodeDto)
         {
@@ -141,16 +140,49 @@ namespace CacheDemo.Tests.Controllers
 
         private static void AddNodes(IUnitOfWork unitOfWork, NodeDTO getNode)
         {
-            var portalId = 1;
-            var node1 = new Node { ParentId = getNode.Id, Content = new Content { Type = ContentType.Original, PortalId = portalId } };
+            var node1 = new Node { ParentId = getNode.Id, Content = new Content { Type = ContentType.Original, PortalId = getNode.Content.PortalId } };
             unitOfWork.Nodes.Add(node1);
-            var node2 = new Node { ParentId = getNode.Id, Content = new Content { Type = ContentType.Original, PortalId = portalId } };
+            var node2 = new Node { ParentId = getNode.Id, Content = new Content { Type = ContentType.Original, PortalId = getNode.Content.PortalId } };
             unitOfWork.Nodes.Add(node2);
 
             //Act
             unitOfWork.Commit();
             unitOfWork.Nodes.UpdateCacheForItsParent(node1);
             unitOfWork.Nodes.UpdateCacheForItsParent(node2);
+        }
+
+        private NodeDTO TransformFromNodeToNodeDTO(Node node)
+        {
+            Mapper.CreateMap<Node, NodeDTO>();
+            var d = Mapper.Map<Node, NodeDTO>(node);
+            NodeDTO nodeDto = new NodeDTO();
+            nodeDto.Id = node.Id;
+            nodeDto.Description = node.Description;
+            nodeDto.ContentId = node.ContentId;
+            nodeDto.Content = node.Content;
+            nodeDto.ParentId = node.ParentId;
+            if (node.Parent != null)
+            {
+                nodeDto.Parent = new NodeDTO { Id = node.Parent.Id, Description = node.Parent.Description, ContentId = node.Parent.ContentId, Content = node.Parent.Content, ParentId = node.ParentId };
+            }
+
+            List<NodeDTO> nodeDTOlist = new List<NodeDTO>();
+            if (node.Children != null)
+            {
+                foreach (var item in node.Children)
+                {
+                    NodeDTO obj = new NodeDTO();
+                    obj.Id = item.Id;
+                    obj.Description = item.Description;
+                    obj.ContentId = item.ContentId;
+                    obj.Content = item.Content;
+                    obj.ParentId = item.ParentId;
+                    nodeDTOlist.Add(obj);
+                }
+            }
+
+            nodeDto.Children = nodeDTOlist;
+            return nodeDto;
         }
     }
 }

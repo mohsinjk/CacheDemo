@@ -35,6 +35,7 @@ namespace CacheDemo.Data
         // Repositories
 
         public INodeRepository Nodes { get { return GetRepo<INodeRepository>(); } }
+        public INodeRepositoryWithCache NodesCache { get { return GetRepo<INodeRepositoryWithCache>(); } }
         public IRepository<Content> Contents { get { return GetStandardRepo<Content>(); } }
         public IRepository<Portal> Portals { get { return GetStandardRepo<Portal>(); } }
         public IShortcutRepository Shortcuts { get { return GetRepo<IShortcutRepository>(); } }

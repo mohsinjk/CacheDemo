@@ -15,6 +15,16 @@ namespace CacheDemo.Data
         {
             _cacheRepository = new CacheRepository<Node>();
         }
+        public override Node GetById(int id)
+        {
+            return base.GetAll().Where(x => x.Id == id).Include("Content").Include("Children").Include("Children.Content").First();
+        }
+
+        public Node GetByContentId(int contentId)
+        {
+            return base.GetAll().Where(x => x.Id == contentId).First();
+        }
+
         public NodeDTO GetNodeDtoByIdWithChildren(int id)
         {
             string key = CacheKey(id);
@@ -26,12 +36,10 @@ namespace CacheDemo.Data
             }
             else
             {
-                Node node = base.GetAll().Where(x => x.Id == id).Include("Content").Include("Children").Include("Children.Content").First();
+                Node node = base.GetAll().Where(x => x.Id == id).Include("Content").Include("Children").Include("Children.Content").ToList().First();
                 Mapper.CreateMap<Node, NodeDTO>();
                 nodeDTO = Mapper.Map<Node, NodeDTO>(node);
 
-                //nodeDTO = TransformFromNodeToNodeDTO(node);
-                
                 _cacheRepository.Add(key, nodeDTO);
             }
 
@@ -44,73 +52,6 @@ namespace CacheDemo.Data
             return key;
         }
 
-        private NodeDTO TransformFromNodeToNodeDTO(Node node)
-        {
-            Mapper.CreateMap<Node, NodeDTO>();
-            var d= Mapper.Map<Node, NodeDTO>(node);
-            NodeDTO nodeDto = new NodeDTO();
-            nodeDto.Id = node.Id;
-            nodeDto.Description = node.Description;
-            nodeDto.ContentId = node.ContentId;
-            nodeDto.Content = node.Content;
-            nodeDto.ParentId = node.ParentId;
-            if (node.Parent != null)
-            {
-                nodeDto.Parent = new NodeDTO { Id = node.Parent.Id, Description = node.Parent.Description, ContentId = node.Parent.ContentId, Content = node.Parent.Content, ParentId = node.ParentId };
-            }
-
-            List<NodeDTO> nodeDTOlist = new List<NodeDTO>();
-            if (node.Children != null)
-            {
-                foreach (var item in node.Children)
-                {
-                    NodeDTO obj = new NodeDTO();
-                    obj.Id = item.Id;
-                    obj.Description = item.Description;
-                    obj.ContentId = item.ContentId;
-                    obj.Content = item.Content;
-                    obj.ParentId = item.ParentId;
-                    nodeDTOlist.Add(obj);
-                }
-            }
-
-            nodeDto.Children = nodeDTOlist;
-            return nodeDto;
-        }
-        //public override Node GetById(int id)
-        //{
-        //    string key = string.Format("{0}.{1}.{2}", this.GetType().FullName, "GetById", id);
-        //    Node node;
-        //    if (_cacheRepository.Exists(key))
-        //    {
-        //        _cacheRepository.Get(key, out node);
-        //        return node;
-        //    }
-        //    else
-        //    {
-        //        node = base.GetById(id);
-        //        _cacheRepository.Add(key, node);
-        //    }
-        //    return node;
-        //}
-
-        public IEnumerable<Node> GetByParentId(int id)
-        {
-            string key = CacheKey(id);
-            IEnumerable<Node> node;
-            if (_cacheRepository.Exists(key + id))
-            {
-                _cacheRepository.Get(key + id, out node);
-                return node;
-            }
-            else
-            {
-                node = base.GetAll().Where(x => x.ParentId == id).Include("Content").ToList();
-                _cacheRepository.Add(key, node);
-            }
-            return node;
-        }
-
         public void UpdateCacheForItsParent(Node entity)
         {
             if (entity.ParentId != null)
@@ -120,7 +61,10 @@ namespace CacheDemo.Data
                 var parentId = entity.ParentId.Value;
                 var nodes = GetNodeDtoByIdWithChildren(parentId);
 
-                nodes.Children.Add(TransformFromNodeToNodeDTO(entity));
+                Mapper.CreateMap<Node, NodeDTO>();
+                var nodeDTO = Mapper.Map<Node, NodeDTO>(entity);
+
+                nodes.Children.Add(nodeDTO);
                 _cacheRepository.Add(key, nodes);
             }
         }
@@ -150,11 +94,69 @@ namespace CacheDemo.Data
             base.Delete(id);
         }
 
+        public void simpleDelete(Node entity)
+        {
+            base.Delete(entity);
+        }
+
+
         //public override void Update(Node entity)
         //{
         //    string key = CacheKey(entity.Id);
         //    _cacheRepository.Add(key, entity);
         //    base.Update(entity);
         //}
+    }
+
+    public class NodeRepositoryWithCache : CacheRepository<Node>, INodeRepositoryWithCache
+    {
+        //public NodeRepositoryWithCache(ICacheRepository<Node> _cacheRepository)
+        //{
+        //    _cacheRepository = new CacheRepository<Node>();
+        //}
+        private string CacheKey(int id)
+        {
+            string key = string.Format("{0}.{1}", this.GetType().FullName, id);
+            return key;
+        }
+
+        public bool GetNodeDtoByIdWithChildren(int id, out NodeDTO nodeDto)
+        {
+            string key = CacheKey(id);
+            return base.Get(key, out nodeDto);
+        }
+
+        public void UpdateCacheForItsParent(NodeDTO nodeDto, NodeDTO parentNodeDto)
+        {
+            if (nodeDto.ParentId != null && parentNodeDto != null && parentNodeDto.Children != null)
+            {
+                string key = CacheKey(nodeDto.ParentId.Value);
+                parentNodeDto.Children.Add(nodeDto);
+                base.Add(key, parentNodeDto);
+            }
+            else
+            {
+                string key = CacheKey(nodeDto.Id);
+                base.Add(key, nodeDto);
+            }
+        }
+
+        public void DeleteCacheFromItsParent(NodeDTO nodeDto, NodeDTO parentNodeDto)
+        {
+            if (nodeDto.ParentId != null && parentNodeDto != null && parentNodeDto.Children != null)
+            {
+                string key = CacheKey(nodeDto.ParentId.Value); 
+
+                var nodeDtoFromCache = parentNodeDto.Children.Find(x => x.Id == nodeDto.Id);
+                parentNodeDto.Children.Remove(nodeDtoFromCache);
+                
+                base.Add(key, parentNodeDto);
+            }
+            else
+            {
+                string key = CacheKey(nodeDto.Id);
+                base.Clear(key);
+            }
+        }
     }
 }

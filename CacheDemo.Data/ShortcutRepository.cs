@@ -14,25 +14,10 @@ namespace CacheDemo.Data
         {
             _cacheRepository = new CacheRepository<Node>();
         }
-        public Content GetOriginalContentByLinkContentId(int id)
+        public Shortcut GetOriginalContentByLinkContentId(int linkContentId)
         {
-            //We do not need to cache Shortcuts Content because Node Cache is already caching.
-
-            //string key = string.Format("{0}.{1}.", this.GetType().FullName, id);
-            //Shortcut shortcut;
-            //if (_cacheRepository.Exists(key))
-            //{
-            //    _cacheRepository.Get(key, out shortcut);
-            //    return shortcut.OriginalContent;
-            //}
-            //else
-            //{
-            //    shortcut = base.GetAll().Where(x => x.LinkContentId == id).Include("OriginalContent").First();
-            //    _cacheRepository.Add(key, shortcut);
-            //}
-            //return shortcut.OriginalContent;
-            var originalContent = base.GetAll().Where(x => x.LinkContentId == id).Include("OriginalContent").First();
-            return originalContent.OriginalContent;
+            var originalContent = base.GetAll().Where(x => x.LinkContentId == linkContentId).Include("OriginalContent").First();
+            return originalContent;
         }
         
     }

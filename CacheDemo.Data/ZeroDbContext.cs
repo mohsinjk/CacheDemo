@@ -17,14 +17,15 @@ namespace CacheDemo.Data
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
-
-
             // Use singular table names
             modelBuilder.Conventions.Remove<PluralizingTableNameConvention>();
             modelBuilder.Conventions.Remove<OneToManyCascadeDeleteConvention>();
 
             modelBuilder.Entity<Node>().Property(c => c.ParentId).IsOptional();
             modelBuilder.Entity<Node>().HasMany(c => c.Children).WithOptional(c => c.Parent).HasForeignKey(c => c.ParentId);
+
+            //modelBuilder.Entity<Node>().HasKey(t => t.ContentId);
+            //modelBuilder.Entity<Content>().HasRequired(t => t.Node).WithRequiredPrincipal(t => t.Content);
         }
 
         public DbSet<Node> Nodes { get; set; }
@@ -61,7 +62,7 @@ namespace CacheDemo.Data
 
         private void AddContent(ZeroDbContext context)
         {
-            var node1 = new Node { Description="1", Content = new Content { Type = ContentType.Original, PortalId = 1 } };
+            var node1 = new Node { Description = "1", Content = new Content { Type = ContentType.Original, PortalId = 1 } };
             context.Nodes.Add(node1);
 
             var node11 = new Node { Description = "1.1", Parent = node1, Content = new Content { Type = ContentType.Original, PortalId = 1 } };
@@ -87,49 +88,55 @@ namespace CacheDemo.Data
 
             var node21 = new Node { Description = "2.1", Parent = node2, Content = new Content { Type = ContentType.Original, PortalId = 2 } };
             context.Nodes.Add(node21);
-            
-            //var node22 = new Node { Description = "2.2", Parent = node2, Content = new Content { Type = ContentType.Original, PortalId = 2 } };
-            //context.Nodes.Add(node22);
 
-            var node211 = new Node { Description = "2.1.1", Parent = node11, Content = new Content { Type = ContentType.Original, PortalId = 1 } };
+            var node211 = new Node { Description = "2.1.1", Parent = node21, Content = new Content { Type = ContentType.Original, PortalId = 2 } };
             context.Nodes.Add(node211);
 
-            var node212 = new Node { Description = "2.1.2", Parent = node11, Content = new Content { Type = ContentType.Original, PortalId = 1 } };
+            var node212 = new Node { Description = "2.1.2", Parent = node21, Content = new Content { Type = ContentType.Original, PortalId = 2 } };
             context.Nodes.Add(node212);
 
-           
+            var node22 = new Node { Description = "2.2", Parent = node2, Content = new Content { Type = ContentType.Shortcut, PortalId = 2 } };
+            context.Nodes.Add(node22);
+
+            var shortcut = new Shortcut { OriginalContentId = 2, LinkContent = node22.Content };
+            context.Shortcuts.Add(shortcut);
+
 
             context.SaveChanges();
         }
 
         private void AddShortcut(ZeroDbContext context)
         {
-            var node = new Node { ParentId = 1, Content = new Content { Type = ContentType.Shortcut, PortalId = 1 } };
-            context.Nodes.Add(node);
+            var node22 = new Node { Description = "2.2", ParentId = 4, Content = new Content { Type = ContentType.Original, PortalId = 2 } };
+            context.Nodes.Add(node22);
 
-            var shortcut = new Shortcut { OriginalContentId = 4, LinkContent = node.Content };
+            var shortcut = new Shortcut { OriginalContentId = 2, LinkContent = node22.Content };
             context.Shortcuts.Add(shortcut);
 
-            node = new Node { ParentId = 1, Content = new Content { Type = ContentType.Shortcut, PortalId = 1 } };
-            context.Nodes.Add(node);
 
-            shortcut = new Shortcut { OriginalContentId = 4, LinkContent = node.Content };
-            context.Shortcuts.Add(shortcut);
+            //var node = new Node { ParentId = 1, Content = new Content { Type = ContentType.Shortcut, PortalId = 1 } };
+            //context.Nodes.Add(node);
 
-            shortcut = new Shortcut { OriginalContentId = 4, LinkContent = node.Content };
-            context.Shortcuts.Add(shortcut);
+            //node = new Node { ParentId = 1, Content = new Content { Type = ContentType.Shortcut, PortalId = 1 } };
+            //context.Nodes.Add(node);
 
-            node = new Node { Content = new Content { Type = ContentType.Shortcut, PortalId = 1 } };
-            context.Nodes.Add(node);
+            //shortcut = new Shortcut { OriginalContentId = 4, LinkContent = node.Content };
+            //context.Shortcuts.Add(shortcut);
 
-            shortcut = new Shortcut { OriginalContentId = 6, LinkContent = node.Content };
-            context.Shortcuts.Add(shortcut);
+            //shortcut = new Shortcut { OriginalContentId = 4, LinkContent = node.Content };
+            //context.Shortcuts.Add(shortcut);
 
-            node = new Node { Content = new Content { Type = ContentType.Shortcut, PortalId = 1 } };
-            context.Nodes.Add(node);
+            //node = new Node { Content = new Content { Type = ContentType.Shortcut, PortalId = 1 } };
+            //context.Nodes.Add(node);
 
-            shortcut = new Shortcut { OriginalContentId = 6, LinkContent = node.Content };
-            context.Shortcuts.Add(shortcut);
+            //shortcut = new Shortcut { OriginalContentId = 6, LinkContent = node.Content };
+            //context.Shortcuts.Add(shortcut);
+
+            //node = new Node { Content = new Content { Type = ContentType.Shortcut, PortalId = 1 } };
+            //context.Nodes.Add(node);
+
+            //shortcut = new Shortcut { OriginalContentId = 6, LinkContent = node.Content };
+            //context.Shortcuts.Add(shortcut);
 
             context.SaveChanges();
         }

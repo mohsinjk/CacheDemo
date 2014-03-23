@@ -33,6 +33,7 @@ namespace CacheDemo.Data.Helpers
             return new Dictionary<Type, Func<DbContext, object>>
                 {
                    {typeof(INodeRepository), dbContext => new NodeRepository(dbContext)},
+                   {typeof(INodeRepositoryWithCache), dbContext => new NodeRepositoryWithCache()},
                    {typeof(IShortcutRepository), dbContext => new ShortcutRepository(dbContext)},
                 };
         }
