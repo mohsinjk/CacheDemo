@@ -14,6 +14,7 @@ using AutoMapper;
 namespace CacheDemo.Tests.Controllers
 {
     [TestClass]
+    [Ignore]
     public class NodeControllerTest
     {
         [TestMethod]

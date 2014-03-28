@@ -11,6 +11,7 @@ using CacheDemo.Controllers;
 namespace CacheDemo.Tests.Controllers
 {
     [TestClass]
+    [Ignore]
     public class ValuesControllerTest
     {
         [TestMethod]

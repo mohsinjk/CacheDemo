@@ -89,7 +89,6 @@ namespace CacheDemo.Data
             string key = CacheKey(id);
 
             var node = GetNodeDtoByIdWithChildren(id);
-            //Delete(node);
             _cacheRepository.Clear(key);
             base.Delete(id);
         }
@@ -99,21 +98,10 @@ namespace CacheDemo.Data
             base.Delete(entity);
         }
 
-
-        //public override void Update(Node entity)
-        //{
-        //    string key = CacheKey(entity.Id);
-        //    _cacheRepository.Add(key, entity);
-        //    base.Update(entity);
-        //}
     }
 
     public class NodeRepositoryWithCache : CacheRepository<Node>, INodeRepositoryWithCache
     {
-        //public NodeRepositoryWithCache(ICacheRepository<Node> _cacheRepository)
-        //{
-        //    _cacheRepository = new CacheRepository<Node>();
-        //}
         private string CacheKey(int id)
         {
             string key = string.Format("{0}.{1}", this.GetType().FullName, id);
