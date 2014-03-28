@@ -19,14 +19,14 @@ namespace CacheDemo.Tests.Controllers
             IUnitOfWork unitOfWork = new UnitOfWork(new RepositoryProvider(new RepositoryFactories()));
             int nodeId = 1;
 
-            NodeDTO nodeDto;
-            nodeDto = GetNodeFromDBorCache(unitOfWork, nodeId);
-            int childNodeCountBefore = ChildNodeCount(nodeDto);
-            AddNodeInDBandCache(unitOfWork, nodeDto);
+            NodeWithOneLevelChildern nodeWithOneLevelChildern;
+            nodeWithOneLevelChildern = GetNodeFromDBorCache(unitOfWork, nodeId);
+            int childNodeCountBefore = ChildNodeCount(nodeWithOneLevelChildern);
+            AddNodeInDBandCache(unitOfWork, nodeWithOneLevelChildern);
 
             //Act
-            unitOfWork.NodesCache.GetNodeDtoByIdWithChildren(nodeId, out nodeDto);
-            int childNodeCountAfter = ChildNodeCount(nodeDto);
+            unitOfWork.NodesCache.GetNodeDtoByIdWithChildren(nodeId, out nodeWithOneLevelChildern);
+            int childNodeCountAfter = ChildNodeCount(nodeWithOneLevelChildern);
 
             //Assert
             Assert.AreEqual(childNodeCountBefore + 2, childNodeCountAfter);
@@ -38,20 +38,20 @@ namespace CacheDemo.Tests.Controllers
             // Arrange
             IUnitOfWork unitOfWork = new UnitOfWork(new RepositoryProvider(new RepositoryFactories()));
             int nodeId = 1;
-            NodeDTO nodeDto;
-            nodeDto = GetNodeFromDBorCache(unitOfWork, nodeId);
-            int childNodeCountBefore = ChildNodeCount(nodeDto);
+            NodeWithOneLevelChildern nodeWithOneLevelChildern;
+            nodeWithOneLevelChildern = GetNodeFromDBorCache(unitOfWork, nodeId);
+            int childNodeCountBefore = ChildNodeCount(nodeWithOneLevelChildern);
 
             int movingNodeId = 9;
             Node movingNode = unitOfWork.Nodes.GetById(movingNodeId);
             //Act
-            MoveNode(unitOfWork, movingNode, nodeDto);
-            unitOfWork.NodesCache.GetNodeDtoByIdWithChildren(nodeId, out nodeDto);
-            int getNodeAfterNewlyAddedChild = nodeDto.Children.Count();
+            MoveNode(unitOfWork, movingNode, nodeWithOneLevelChildern);
+            unitOfWork.NodesCache.GetNodeDtoByIdWithChildren(nodeId, out nodeWithOneLevelChildern);
+            int getNodeAfterNewlyAddedChild = nodeWithOneLevelChildern.Children.Count();
 
             int oldParentId = 4;
-            nodeDto = GetNodeFromDBorCache(unitOfWork, oldParentId);
-            int getNodeAfterMovingChildFromAnOtherParent = nodeDto.Children.Count();
+            nodeWithOneLevelChildern = GetNodeFromDBorCache(unitOfWork, oldParentId);
+            int getNodeAfterMovingChildFromAnOtherParent = nodeWithOneLevelChildern.Children.Count();
             //Assert
             Assert.AreEqual(childNodeCountBefore + 1, getNodeAfterNewlyAddedChild);
             Assert.AreEqual(2, getNodeAfterMovingChildFromAnOtherParent);
@@ -64,14 +64,14 @@ namespace CacheDemo.Tests.Controllers
             IUnitOfWork unitOfWork = new UnitOfWork(new RepositoryProvider(new RepositoryFactories()));
             int nodeId = 12;
 
-            NodeDTO nodeDto;
-            nodeDto = GetNodeFromDBorCache(unitOfWork, nodeId);
-            if (nodeDto.Content.Type == ContentType.Shortcut)
+            NodeWithOneLevelChildern nodeWithOneLevelChildern;
+            nodeWithOneLevelChildern = GetNodeFromDBorCache(unitOfWork, nodeId);
+            if (nodeWithOneLevelChildern.Content.Type == ContentType.Shortcut)
             {
-                GetOriginalNode(unitOfWork, nodeDto);
+                GetOriginalNode(unitOfWork, nodeWithOneLevelChildern);
             }
             //Act
-            bool isNodeHaveOriginalContent = (nodeDto.Content.Type == ContentType.Original);
+            bool isNodeHaveOriginalContent = (nodeWithOneLevelChildern.Content.Type == ContentType.Original);
 
             //Assert
             Assert.IsTrue(isNodeHaveOriginalContent);
@@ -84,13 +84,13 @@ namespace CacheDemo.Tests.Controllers
             IUnitOfWork unitOfWork = new UnitOfWork(new RepositoryProvider(new RepositoryFactories()));
             int nodeId = 1;
 
-            NodeDTO nodeDto;
-            nodeDto = GetNodeFromDBorCache(unitOfWork, nodeId);
-            int childNodeCountBefore = ChildNodeCount(nodeDto);
-            AddNodeInDBandCache(unitOfWork, nodeDto);
+            NodeWithOneLevelChildern nodeWithOneLevelChildern;
+            nodeWithOneLevelChildern = GetNodeFromDBorCache(unitOfWork, nodeId);
+            int childNodeCountBefore = ChildNodeCount(nodeWithOneLevelChildern);
+            AddNodeInDBandCache(unitOfWork, nodeWithOneLevelChildern);
 
             //Act
-            int childNodeCountAfter = ChildNodeCount(nodeDto);
+            int childNodeCountAfter = ChildNodeCount(nodeWithOneLevelChildern);
 
             //Assert
             Assert.AreEqual(childNodeCountBefore + 2, childNodeCountAfter);
@@ -99,12 +99,12 @@ namespace CacheDemo.Tests.Controllers
             IQueryable<Node> testData = unitOfWork.Nodes.GetAll().Where(x => x.Id > 12);
             foreach (Node node in testData)
             {
-                NodeDTO nodeDtoDelete = TransformFromNodeToNodeDto(node);
-                unitOfWork.NodesCache.DeleteCacheFromItsParent(nodeDtoDelete, nodeDto);
+                NodeWithOneLevelChildern nodeWithOneLevelChildernDelete = TransformFromNodeToNodeDto(node);
+                unitOfWork.NodesCache.DeleteCacheFromItsParent(nodeWithOneLevelChildernDelete, nodeWithOneLevelChildern);
                 unitOfWork.Nodes.simpleDelete(node);
             }
             unitOfWork.Commit();
-            childNodeCountAfter = ChildNodeCount(nodeDto);
+            childNodeCountAfter = ChildNodeCount(nodeWithOneLevelChildern);
 
             //Assert
             Assert.AreEqual(childNodeCountBefore, childNodeCountAfter);
@@ -125,60 +125,60 @@ namespace CacheDemo.Tests.Controllers
 
         #region Private Method
 
-        private NodeDTO GetNodeFromDBorCache(IUnitOfWork unitOfWork, int nodeId)
+        private NodeWithOneLevelChildern GetNodeFromDBorCache(IUnitOfWork unitOfWork, int nodeId)
         {
-            NodeDTO nodeDto;
-            bool checkNodeCache = unitOfWork.NodesCache.GetNodeDtoByIdWithChildren(nodeId, out nodeDto);
+            NodeWithOneLevelChildern nodeWithOneLevelChildern;
+            bool checkNodeCache = unitOfWork.NodesCache.GetNodeDtoByIdWithChildren(nodeId, out nodeWithOneLevelChildern);
             if (!checkNodeCache)
             {
                 Node getNode =
                     unitOfWork.Nodes.GetAll()
                         .Where(x => x.Id == nodeId)
-                        //.Include("Content")
-                        //.Include("Parent")
-                        //.Include("Children")
-                        //.Include("Children.Content")
+                        .Include("Content")
+                        .Include("Parent")
+                        .Include("Children")
+                        .Include("Children.Content")
                         .First();
 
-                nodeDto = TransformFromNodeToNodeDto(getNode);
-                unitOfWork.NodesCache.UpdateCacheForItsParent(nodeDto, nodeDto.Parent);
+                nodeWithOneLevelChildern = TransformFromNodeToNodeDto(getNode);
+                unitOfWork.NodesCache.UpdateCacheForItsParent(nodeWithOneLevelChildern, nodeWithOneLevelChildern.Parent);
             }
-            return nodeDto;
+            return nodeWithOneLevelChildern;
         }
 
-        private void AddNodeInDBandCache(IUnitOfWork unitOfWork, NodeDTO nodeDto)
+        private void AddNodeInDBandCache(IUnitOfWork unitOfWork, NodeWithOneLevelChildern nodeWithOneLevelChildern)
         {
             var node1 = new Node
             {
-                ParentId = nodeDto.Id,
-                Content = new Content {Type = ContentType.Original, PortalId = nodeDto.Content.PortalId}
+                ParentId = nodeWithOneLevelChildern.Id,
+                Content = new Content {Type = ContentType.Original, PortalId = nodeWithOneLevelChildern.Content.PortalId}
             };
             unitOfWork.Nodes.Add(node1);
             var node2 = new Node
             {
-                ParentId = nodeDto.Id,
-                Content = new Content {Type = ContentType.Original, PortalId = nodeDto.Content.PortalId}
+                ParentId = nodeWithOneLevelChildern.Id,
+                Content = new Content {Type = ContentType.Original, PortalId = nodeWithOneLevelChildern.Content.PortalId}
             };
             unitOfWork.Nodes.Add(node2);
             unitOfWork.Commit();
 
-            unitOfWork.NodesCache.UpdateCacheForItsParent(TransformFromNodeToNodeDto(node1), nodeDto);
-            unitOfWork.NodesCache.UpdateCacheForItsParent(TransformFromNodeToNodeDto(node2), nodeDto);
+            unitOfWork.NodesCache.UpdateCacheForItsParent(TransformFromNodeToNodeDto(node1), nodeWithOneLevelChildern);
+            unitOfWork.NodesCache.UpdateCacheForItsParent(TransformFromNodeToNodeDto(node2), nodeWithOneLevelChildern);
         }
 
-        private void MoveNode(IUnitOfWork unitOfWork,Node movingNode, NodeDTO parentNodeDto)
+        private void MoveNode(IUnitOfWork unitOfWork,Node movingNode, NodeWithOneLevelChildern parentNodeWithOneLevelChildern)
         {
             
-            movingNode.ParentId = parentNodeDto.Id; // Change ParentId from 4 to 1
-            NodeDTO movingNodeDto = TransformFromNodeToNodeDto(movingNode);
+            movingNode.ParentId = parentNodeWithOneLevelChildern.Id; // Change ParentId from 4 to 1
+            NodeWithOneLevelChildern movingNodeWithOneLevelChildern = TransformFromNodeToNodeDto(movingNode);
             unitOfWork.Nodes.Update(movingNode);
             unitOfWork.Commit();
-            unitOfWork.NodesCache.UpdateCacheForItsParent(movingNodeDto, parentNodeDto);
+            unitOfWork.NodesCache.UpdateCacheForItsParent(movingNodeWithOneLevelChildern, parentNodeWithOneLevelChildern);
         }
 
-        private static int ChildNodeCount(NodeDTO getNode)
+        private static int ChildNodeCount(NodeWithOneLevelChildern getNode)
         {
-            List<NodeDTO> childNodes = getNode.Children;
+            List<NodeWithOneLevelChildern> childNodes = getNode.Children;
             int childNodeCount = 0;
             if (childNodes != null)
             {
@@ -187,9 +187,9 @@ namespace CacheDemo.Tests.Controllers
             return childNodeCount;
         }
 
-        private NodeDTO TransformFromNodeToNodeDto(Node node)
+        private NodeWithOneLevelChildern TransformFromNodeToNodeDto(Node node)
         {
-            var nodeDto = new NodeDTO();
+            var nodeDto = new NodeWithOneLevelChildern();
             nodeDto.Id = node.Id;
             nodeDto.Description = node.Description;
             nodeDto.ContentId = node.ContentId;
@@ -197,7 +197,7 @@ namespace CacheDemo.Tests.Controllers
             nodeDto.ParentId = node.ParentId;
             if (node.Parent != null)
             {
-                nodeDto.Parent = new NodeDTO
+                nodeDto.Parent = new NodeWithOneLevelChildern
                 {
                     Id = node.Parent.Id,
                     Description = node.Parent.Description,
@@ -207,12 +207,12 @@ namespace CacheDemo.Tests.Controllers
                 };
             }
 
-            var nodeDTOlist = new List<NodeDTO>();
+            var nodeDTOlist = new List<NodeWithOneLevelChildern>();
             if (node.Children != null)
             {
                 foreach (Node item in node.Children)
                 {
-                    var obj = new NodeDTO();
+                    var obj = new NodeWithOneLevelChildern();
                     obj.Id = item.Id;
                     obj.Description = item.Description;
                     obj.ContentId = item.ContentId;
@@ -220,7 +220,7 @@ namespace CacheDemo.Tests.Controllers
                     obj.ParentId = item.ParentId;
                     if (item.Parent != null)
                     {
-                        obj.Parent = new NodeDTO
+                        obj.Parent = new NodeWithOneLevelChildern
                         {
                             Id = item.Parent.Id,
                             Description = item.Parent.Description,
@@ -238,14 +238,14 @@ namespace CacheDemo.Tests.Controllers
             return nodeDto;
         }
 
-        private void GetOriginalNode(IUnitOfWork unitOfWork, NodeDTO nodeDto)
+        private void GetOriginalNode(IUnitOfWork unitOfWork, NodeWithOneLevelChildern nodeWithOneLevelChildern)
         {
-            Shortcut shortcut = unitOfWork.Shortcuts.GetOriginalContentByLinkContentId(nodeDto.Content.Id);
+            Shortcut shortcut = unitOfWork.Shortcuts.GetOriginalContentByLinkContentId(nodeWithOneLevelChildern.Content.Id);
 
             Node originalNode = unitOfWork.Nodes.GetByContentId(shortcut.OriginalContentId);
-            NodeDTO originalNodeDto = GetNodeFromDBorCache(unitOfWork, originalNode.Id);
-            nodeDto.Content = shortcut.OriginalContent;
-            nodeDto.Children = originalNodeDto.Children;
+            NodeWithOneLevelChildern originalNodeWithOneLevelChildern = GetNodeFromDBorCache(unitOfWork, originalNode.Id);
+            nodeWithOneLevelChildern.Content = shortcut.OriginalContent;
+            nodeWithOneLevelChildern.Children = originalNodeWithOneLevelChildern.Children;
         }
 
         #endregion

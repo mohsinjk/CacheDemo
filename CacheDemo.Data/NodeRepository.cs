@@ -25,25 +25,25 @@ namespace CacheDemo.Data
             return base.GetAll().Where(x => x.Id == contentId).First();
         }
 
-        public NodeDTO GetNodeDtoByIdWithChildren(int id)
+        public NodeWithOneLevelChildern GetNodeDtoByIdWithChildren(int id)
         {
             string key = CacheKey(id);
-            NodeDTO nodeDTO = null;
+            NodeWithOneLevelChildern nodeWithOneLevelChildern = null;
             if (_cacheRepository.Exists(key))
             {
-                _cacheRepository.Get(key, out nodeDTO);
-                return nodeDTO;
+                _cacheRepository.Get(key, out nodeWithOneLevelChildern);
+                return nodeWithOneLevelChildern;
             }
             else
             {
                 Node node = base.GetAll().Where(x => x.Id == id).Include("Content").Include("Children").Include("Children.Content").ToList().First();
-                Mapper.CreateMap<Node, NodeDTO>();
-                nodeDTO = Mapper.Map<Node, NodeDTO>(node);
+                Mapper.CreateMap<Node, NodeWithOneLevelChildern>();
+                nodeWithOneLevelChildern = Mapper.Map<Node, NodeWithOneLevelChildern>(node);
 
-                _cacheRepository.Add(key, nodeDTO);
+                _cacheRepository.Add(key, nodeWithOneLevelChildern);
             }
 
-            return nodeDTO;
+            return nodeWithOneLevelChildern;
         }
 
         private string CacheKey(int id)
@@ -61,8 +61,8 @@ namespace CacheDemo.Data
                 var parentId = entity.ParentId.Value;
                 var nodes = GetNodeDtoByIdWithChildren(parentId);
 
-                Mapper.CreateMap<Node, NodeDTO>();
-                var nodeDTO = Mapper.Map<Node, NodeDTO>(entity);
+                Mapper.CreateMap<Node, NodeWithOneLevelChildern>();
+                var nodeDTO = Mapper.Map<Node, NodeWithOneLevelChildern>(entity);
 
                 nodes.Children.Add(nodeDTO);
                 _cacheRepository.Add(key, nodes);
@@ -73,11 +73,11 @@ namespace CacheDemo.Data
         {
             if (entity.ParentId != null)
             {
-                NodeDTO nodeDto;
-                nodeDto = GetNodeDtoByIdWithChildren(entity.ParentId.Value);
+                NodeWithOneLevelChildern nodeWithOneLevelChildern;
+                nodeWithOneLevelChildern = GetNodeDtoByIdWithChildren(entity.ParentId.Value);
 
-                var deleteEntity = nodeDto.Children.Find(x => x.Id == entity.Id);
-                nodeDto.Children.Remove(deleteEntity);
+                var deleteEntity = nodeWithOneLevelChildern.Children.Find(x => x.Id == entity.Id);
+                nodeWithOneLevelChildern.Children.Remove(deleteEntity);
             }
             string key = string.Format("{0}.{1}", this.GetType().FullName, entity.Id);
             _cacheRepository.Clear(key);
@@ -120,41 +120,41 @@ namespace CacheDemo.Data
             return key;
         }
 
-        public bool GetNodeDtoByIdWithChildren(int id, out NodeDTO nodeDto)
+        public bool GetNodeDtoByIdWithChildren(int id, out NodeWithOneLevelChildern nodeWithOneLevelChildern)
         {
             string key = CacheKey(id);
-            return base.Get(key, out nodeDto);
+            return base.Get(key, out nodeWithOneLevelChildern);
         }
 
-        public void UpdateCacheForItsParent(NodeDTO nodeDto, NodeDTO parentNodeDto)
+        public void UpdateCacheForItsParent(NodeWithOneLevelChildern nodeWithOneLevelChildern, NodeWithOneLevelChildern parentNodeWithOneLevelChildern)
         {
-            if (nodeDto.ParentId != null && parentNodeDto != null && parentNodeDto.Children != null)
+            if (nodeWithOneLevelChildern.ParentId != null && parentNodeWithOneLevelChildern != null && parentNodeWithOneLevelChildern.Children != null)
             {
-                string key = CacheKey(nodeDto.ParentId.Value);
-                parentNodeDto.Children.Add(nodeDto);
-                base.Add(key, parentNodeDto);
+                string key = CacheKey(nodeWithOneLevelChildern.ParentId.Value);
+                parentNodeWithOneLevelChildern.Children.Add(nodeWithOneLevelChildern);
+                base.Add(key, parentNodeWithOneLevelChildern);
             }
             else
             {
-                string key = CacheKey(nodeDto.Id);
-                base.Add(key, nodeDto);
+                string key = CacheKey(nodeWithOneLevelChildern.Id);
+                base.Add(key, nodeWithOneLevelChildern);
             }
         }
 
-        public void DeleteCacheFromItsParent(NodeDTO nodeDto, NodeDTO parentNodeDto)
+        public void DeleteCacheFromItsParent(NodeWithOneLevelChildern nodeWithOneLevelChildern, NodeWithOneLevelChildern parentNodeWithOneLevelChildern)
         {
-            if (nodeDto.ParentId != null && parentNodeDto != null && parentNodeDto.Children != null)
+            if (nodeWithOneLevelChildern.ParentId != null && parentNodeWithOneLevelChildern != null && parentNodeWithOneLevelChildern.Children != null)
             {
-                string key = CacheKey(nodeDto.ParentId.Value); 
+                string key = CacheKey(nodeWithOneLevelChildern.ParentId.Value); 
 
-                var nodeDtoFromCache = parentNodeDto.Children.Find(x => x.Id == nodeDto.Id);
-                parentNodeDto.Children.Remove(nodeDtoFromCache);
+                var nodeDtoFromCache = parentNodeWithOneLevelChildern.Children.Find(x => x.Id == nodeWithOneLevelChildern.Id);
+                parentNodeWithOneLevelChildern.Children.Remove(nodeDtoFromCache);
                 
-                base.Add(key, parentNodeDto);
+                base.Add(key, parentNodeWithOneLevelChildern);
             }
             else
             {
-                string key = CacheKey(nodeDto.Id);
+                string key = CacheKey(nodeWithOneLevelChildern.Id);
                 base.Clear(key);
             }
         }

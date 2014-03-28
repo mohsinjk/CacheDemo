@@ -117,17 +117,17 @@ namespace CacheDemo.Tests.Controllers
             unitOfWork.Commit();
         }
 
-        private static void MoveNode(IUnitOfWork unitOfWork, NodeDTO nodeDto)
+        private static void MoveNode(IUnitOfWork unitOfWork, NodeWithOneLevelChildern nodeWithOneLevelChildern)
         {
             var getMovingNode = unitOfWork.Nodes.GetById(9);
-            getMovingNode.ParentId = nodeDto.Id; // Change ParentId from 4 to 1
+            getMovingNode.ParentId = nodeWithOneLevelChildern.Id; // Change ParentId from 4 to 1
 
             unitOfWork.Nodes.Update(getMovingNode);
             unitOfWork.Commit();
             unitOfWork.Nodes.UpdateCacheForItsParent(getMovingNode);
         }
 
-        private static int ChildNodeCountBefore(NodeDTO getNode)
+        private static int ChildNodeCountBefore(NodeWithOneLevelChildern getNode)
         {
             var childNodes = getNode.Children;
             var childNodeCountBefore = 0;
@@ -138,7 +138,7 @@ namespace CacheDemo.Tests.Controllers
             return childNodeCountBefore;
         }
 
-        private static void AddNodes(IUnitOfWork unitOfWork, NodeDTO getNode)
+        private static void AddNodes(IUnitOfWork unitOfWork, NodeWithOneLevelChildern getNode)
         {
             var node1 = new Node { ParentId = getNode.Id, Content = new Content { Type = ContentType.Original, PortalId = getNode.Content.PortalId } };
             unitOfWork.Nodes.Add(node1);
@@ -151,27 +151,27 @@ namespace CacheDemo.Tests.Controllers
             unitOfWork.Nodes.UpdateCacheForItsParent(node2);
         }
 
-        private NodeDTO TransformFromNodeToNodeDTO(Node node)
+        private NodeWithOneLevelChildern TransformFromNodeToNodeDTO(Node node)
         {
-            Mapper.CreateMap<Node, NodeDTO>();
-            var d = Mapper.Map<Node, NodeDTO>(node);
-            NodeDTO nodeDto = new NodeDTO();
-            nodeDto.Id = node.Id;
-            nodeDto.Description = node.Description;
-            nodeDto.ContentId = node.ContentId;
-            nodeDto.Content = node.Content;
-            nodeDto.ParentId = node.ParentId;
+            Mapper.CreateMap<Node, NodeWithOneLevelChildern>();
+            var d = Mapper.Map<Node, NodeWithOneLevelChildern>(node);
+            NodeWithOneLevelChildern nodeWithOneLevelChildern = new NodeWithOneLevelChildern();
+            nodeWithOneLevelChildern.Id = node.Id;
+            nodeWithOneLevelChildern.Description = node.Description;
+            nodeWithOneLevelChildern.ContentId = node.ContentId;
+            nodeWithOneLevelChildern.Content = node.Content;
+            nodeWithOneLevelChildern.ParentId = node.ParentId;
             if (node.Parent != null)
             {
-                nodeDto.Parent = new NodeDTO { Id = node.Parent.Id, Description = node.Parent.Description, ContentId = node.Parent.ContentId, Content = node.Parent.Content, ParentId = node.ParentId };
+                nodeWithOneLevelChildern.Parent = new NodeWithOneLevelChildern { Id = node.Parent.Id, Description = node.Parent.Description, ContentId = node.Parent.ContentId, Content = node.Parent.Content, ParentId = node.ParentId };
             }
 
-            List<NodeDTO> nodeDTOlist = new List<NodeDTO>();
+            List<NodeWithOneLevelChildern> nodeDTOlist = new List<NodeWithOneLevelChildern>();
             if (node.Children != null)
             {
                 foreach (var item in node.Children)
                 {
-                    NodeDTO obj = new NodeDTO();
+                    NodeWithOneLevelChildern obj = new NodeWithOneLevelChildern();
                     obj.Id = item.Id;
                     obj.Description = item.Description;
                     obj.ContentId = item.ContentId;
@@ -181,8 +181,8 @@ namespace CacheDemo.Tests.Controllers
                 }
             }
 
-            nodeDto.Children = nodeDTOlist;
-            return nodeDto;
+            nodeWithOneLevelChildern.Children = nodeDTOlist;
+            return nodeWithOneLevelChildern;
         }
     }
 }

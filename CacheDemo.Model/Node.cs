@@ -7,20 +7,20 @@ namespace CacheDemo.Model
         public int Id { get; set; }
         public string Description { get; set; }
         public int? ParentId { get; set; }
-        public Node Parent { get; set; }
+        public virtual Node Parent { get; set; }
         public int ContentId { get; set; }
-        public Content Content { get; set; }
-        public List<Node> Children { get; set; }
+        public virtual Content Content { get; set; }
+        public virtual ICollection<Node> Children { get; set; }
     }
 
-    public class NodeDTO
+    public class NodeWithOneLevelChildern
     {
         public int Id { get; set; }
         public string Description { get; set; }
         public int? ParentId { get; set; }
-        public NodeDTO Parent { get; set; }
+        public NodeWithOneLevelChildern Parent { get; set; }
         public int ContentId { get; set; }
         public Content Content { get; set; }
-        public List<NodeDTO> Children { get; set; }
+        public List<NodeWithOneLevelChildern> Children { get; set; }
     }
 }
